@@ -62,7 +62,7 @@ function SignOut() {
 function ChatRoom() {
 
   const messagesRef = firestore.collection('messages');
-  const query = messagesRef.orderBy('createdAt').limit(25);
+  const query = messagesRef.orderBy('createdAt').limitToLast(200);
   const messages = useCollectionData(query);
   const [formValue, setFormValue] = useState("");
   const [disable, setDisable] = useState(false);
@@ -71,19 +71,23 @@ function ChatRoom() {
   const sendMessage = async (e) => {
 
     e.preventDefault();
-    setDisable(true)
 
-    const { uid, photoURL } = auth.currentUser;
-    await messagesRef.add({
-      text: formValue,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      uid,
-      photoUrl: photoURL
-    })
+    if (formValue !== '') {
 
-    setFormValue("")
-    setDisable(false)
-    dummy.current.scrollIntoView({behavior : 'smooth'})
+      setDisable(true)
+
+      const { uid, photoURL } = auth.currentUser;
+      await messagesRef.add({
+        text: formValue,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        uid,
+        photoUrl: photoURL
+      })
+
+      setFormValue("")
+      setDisable(false)
+      dummy.current.scrollIntoView({ behavior: 'smooth' })
+    }
   }
 
   console.log(messages)
@@ -106,12 +110,12 @@ function ChatRoom() {
 
 
 function ChatMessage(props) {
-  const { text, uid, photoUrl } = props.message;
+  const { text, uid, photoUrl, createdAt } = props.message;
 
   const messageClass = uid == auth.currentUser.uid ? 'sent' : 'received'
 
   return (
-    <div className={`message ${messageClass}`}>
+    <div key={createdAt} className={`message ${messageClass}`}>
       <img src={photoUrl} />
       <p>{text}</p>
     </div>
