@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import './App.css';
+import * as moment from 'moment'
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/auth';
 import 'firebase/compat/firestore';
@@ -65,14 +66,14 @@ function ChatRoom() {
   const query = messagesRef.orderBy('createdAt').limitToLast(200);
   const messages = useCollectionData(query);
   const [formValue, setFormValue] = useState("");
-  const [disable, setDisable] = useState(false);
+  const [disable, setDisable] = useState(true);
   const dummy = useRef();
 
   const sendMessage = async (e) => {
 
     e.preventDefault();
 
-    if (formValue !== '') {
+    if (formValue !== "") {
 
       setDisable(true)
 
@@ -90,15 +91,21 @@ function ChatRoom() {
     }
   }
 
-  console.log(messages)
+  const text = (e) => {
+    setFormValue(e.target.value)
+    if (e.target.value !== "") {
+      setDisable(false)
+    }
+  }
+
   return (
     <div>
       <main>
-        {messages[0] && messages[0].map(msg => <ChatMessage message={msg} />)}
+        {messages[0] && messages[0].map((msg, index) => <ChatMessage message={msg} key={index} />)}
         <div ref={dummy}></div>
       </main>
       <form onSubmit={sendMessage}>
-        <input value={formValue} disabled={disable} onChange={(e) => setFormValue(e.target.value)} />
+        <input value={formValue} placeholder="Type a message" onChange={text} />
         <button disabled={disable} type='submit'>Send</button>
       </form>
 
@@ -113,11 +120,16 @@ function ChatMessage(props) {
   const { text, uid, photoUrl, createdAt } = props.message;
 
   const messageClass = uid == auth.currentUser.uid ? 'sent' : 'received'
-
+  // console.log(createdAt.toDate())
   return (
     <div key={createdAt} className={`message ${messageClass}`}>
       <img src={photoUrl} />
-      <p>{text}</p>
+      <div className='msg'>
+        <p>{text}</p>
+        {/* <span className='time'>
+          {moment(createdAt.toDate()).subtract('days').calendar()}
+        </span> */}
+      </div>
     </div>
   )
 }
